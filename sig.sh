@@ -1,48 +1,38 @@
 #!/bin/sh
-# chkconfig: 2345 85 15
-# description: Starts and stops the redis daemon that handles \
-#              all redis session requests.
 
-EXEC="/usr/local/bin/node"
-PIDFILE=/var/run/sig.pid
-CONF="/var/www/sig/trunk/sig.js"
+# chkconfig: 2345 95 20
+# description: Start sig server
+# processname: sig
 
-start() {
-    if [ -s $PIDFILE ]
-        then
-                echo "$PIDFILE exists, process is already running or crashed"
-        else
-                echo "Starting $PIDFILE..."
-                nohup $EXEC $CONF > /dev/null 2>&1 &
-                echo $! > $PIDFILE
-        fi
+node="/usr/local/bin/node"
+script="/var/www/sig/trunk/sig.js"
+log="/var/log/sig/sig.log"
+server="sig"
+
+
+do_start()
+{
+    echo -n "Starting $server: "
+   `$node $script >> $log 2>&1 &` && echo "Success" || echo "Fail"
 }
-
-stop() {
-    if [ ! -s $PIDFILE ]
-        then
-                echo "$PIDFILE does not exist, process is not running"
-        else
-                echo "Stopping $PIDFILE..."
-                kill `cat $PIDFILE`
-                cat /dev/null > $PIDFILE
-        fi
+do_stop()
+{
+    echo -n "Stopping $server: "
+    pid=`ps ax | grep -i 'node' | grep -i 'sig.js' | awk '{print $1}'`
+    kill -9 $pid && echo "Success" || echo "Fail"
 }
 
 case "$1" in
     start)
-        start
+        do_start
         ;;
     stop)
-        stop
+        do_stop
         ;;
     restart)
-        stop
-        start
+        do_stop
+        do_start
         ;;
     *)
-        echo "Please use start or stop as first argument"
-        ;;
+    echo "Usage: $0 {start|stop|restart}"
 esac
-
-exit 0
